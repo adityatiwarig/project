@@ -1,0 +1,135 @@
+datasource db {
+  provider = "postgresql"
+  
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model College {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  departments Department[]
+  students    Student[]
+  teachers    Teacher[]
+  notifications Notification[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Department {
+  id          String       @id @default(cuid())
+  name        String
+  college     College      @relation(fields: [collegeId], references: [id])
+  collegeId   String
+  students    Student[]
+  teachers    Teacher[]    @relation("TeacherDepartments")
+  notifications Notification[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Section {
+  id          String       @id @default(cuid())
+  name        String
+  department  Department   @relation(fields: [departmentId], references: [id])
+  departmentId String
+  students    Student[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Student {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  enrollment   String       @unique
+  firebaseId   String       @unique
+  college      College      @relation(fields: [collegeId], references: [id])
+  collegeId    String
+  department   Department   @relation(fields: [departmentId], references: [id])
+  departmentId String
+  section      Section?     @relation(fields: [sectionId], references: [id])
+  sectionId    String?
+  semester     Int
+  notifications Notification[] @relation("StudentNotifications")
+  eventRequests EventRequest[]
+  calendarEvents CalendarEvent[] @relation("StudentEvents")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Teacher {
+  id          String       @id @default(cuid())
+  name        String
+  email       String       @unique
+  firebaseId  String       @unique
+  college     College      @relation(fields: [collegeId], references: [id])
+  collegeId   String
+  departments Department[] @relation("TeacherDepartments")
+  notifications Notification[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Notification {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  createdAt    DateTime     @default(now())
+  deadline     DateTime?
+  teacher      Teacher      @relation(fields: [teacherId], references: [id])
+  teacherId    String
+  college      College      @relation(fields: [collegeId], references: [id])
+  collegeId    String
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  departmentId String?
+  semester     Int?
+  section      Section?
+  students     Student[]    @relation("StudentNotifications")
+}
+
+model EventRequest {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  preferredDate DateTime
+  status       EventStatus  @default(PENDING)
+  student      Student      @relation(fields: [studentId], references: [id])
+  studentId    String
+  teacher      Teacher?     @relation(fields: [teacherId], references: [id])
+  teacherId    String?
+  college      College      @relation(fields: [collegeId], references: [id])
+  collegeId    String
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  departmentId String?
+  semester     Int?
+  section      Section?
+  createdAt    DateTime     @default(now())
+  approvedAt   DateTime?
+}
+
+model CalendarEvent {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  teacher     Teacher      @relation(fields: [teacherId], references: [id])
+  teacherId   String
+  college     College      @relation(fields: [collegeId], references: [id])
+  collegeId   String
+  department  Department?  @relation(fields: [departmentId], references: [id])
+  departmentId String?
+  semester    Int?
+  section     Section?
+  students    Student[]    @relation("StudentEvents")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum EventStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
